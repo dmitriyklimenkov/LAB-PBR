@@ -118,7 +118,7 @@ HA_EM-6-LOG: ISP1_DOWN: ISP1 is DOWN
 
 Проверим таблицу маршрутизации еще раз:
 
-![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route2.PNG)
+![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv6%20ip%20route2.PNG)
 
 Видно, что маршрут по умолчанию теперь через R25.
 
