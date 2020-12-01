@@ -10,6 +10,7 @@
 # Решение:
 
 # Схема сегмента сети:
+
 ![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/%D0%A1%D1%85%D0%B5%D0%BC%D0%B0%20PBR.PNG)
 
 # 1. Конфигурация PBR IPv4 на R28.
@@ -40,10 +41,14 @@ ip route 0.0.0.0 0.0.0.0 194.14.123.29 20
 
 # 2. Проверка
 Проверим таблицу маршрутизации, когда основной линк в работает:
+
 ![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route1.PNG)
+
 Видно, что маршрут по умолчанию настроен через R26.
 Теперь на R26 отключим интерфейс e0/1.
 Появилось сообщение: Dec  1 17:47:57.203: TRACKING-5-STATE: 10 ip sla 1 reachability Up->Down
 Проверим таблицу маршрутизации еще раз:
+
 ![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route2.PNG)
+
 Видно, что маршрут по умолчанию теперь через R25.
