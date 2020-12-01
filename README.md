@@ -121,3 +121,10 @@ HA_EM-6-LOG: ISP1_DOWN: ISP1 is DOWN
 ![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route2.PNG)
 
 Видно, что маршрут по умолчанию теперь через R25.
+
+# 5. Настройка IPv4, IPv6 маршрутов по умолчанию на R27.
+
+ip route 0.0.0.0 0.0.0.0 194.14.123.25
+!
+ipv6 route ::/0 200C:C0FE:1111:70::2
+
