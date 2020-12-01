@@ -83,8 +83,8 @@ event manager applet ISP1_UP
  event track 100 state up
  action 001 cli command "enable"
  action 002 cli command "configure terminal"
- action 003 cli command "no ipv6 route ::0/64 200c:c0fe:1111:80::2"
- action 004 cli command "ipv6 route ::0/64 200c:c0fe:1111:90::2"
+ action 003 cli command "no ipv6 route ::0/0 200c:c0fe:1111:80::2"
+ action 004 cli command "ipv6 route ::0/0 200c:c0fe:1111:90::2"
  action 005 syslog msg "ISP1 is UP"
  action 006 cli command "end"
  action 007 cli command "exit"
@@ -93,8 +93,8 @@ event manager applet ISP1_DOWN
  event track 100 state down
  action 001 cli command "enable"
  action 002 cli command "configure terminal"
- action 003 cli command "ipv6 route ::0/64 200c:c0fe:1111:80::2"
- action 004 cli command "no ipv6 route ::0/64 200c:c0fe:1111:90::2"
+ action 003 cli command "ipv6 route ::0/0 200c:c0fe:1111:80::2"
+ action 004 cli command "no ipv6 route ::0/0 200c:c0fe:1111:90::2"
  action 005 syslog msg "ISP1 is DOWN"
  action 006 cli command "end"
  action 007 cli command "exit"
@@ -123,8 +123,8 @@ HA_EM-6-LOG: ISP1_DOWN: ISP1 is DOWN
 Видно, что маршрут по умолчанию теперь через R25.
 
 # 5. Настройка IPv4, IPv6 маршрутов по умолчанию на R27.
-
+```
 ip route 0.0.0.0 0.0.0.0 194.14.123.25
 !
 ipv6 route ::/0 200C:C0FE:1111:70::2
-
+```
