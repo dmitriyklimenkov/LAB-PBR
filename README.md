@@ -23,41 +23,61 @@ ip sla 1
  timeout 1500
  frequency 3
 ip sla schedule 1 life forever start-time now
+
+ip sla 2
+ icmp-echo 194.14.123.29 source-interface Ethernet0/1
+ threshold 1000
+ timeout 1500
+ frequency 3
+ip sla schedule 2 life forever start-time now
 ```
 
 Настроим track:
 ```
 track 10 ip sla 1 reachability
  delay down 10 up 5
+track 20 ip sla 2 reachability
+ delay down 10 up 5
  ```
 
 IP SLA 1 будет проверять доступность по IPv4 адресу R26.
+IP SLA 2 будет проверять доступность по IPv4 адресу R25.
 Track 10 отслеживает состояние IP SLA 1.
-Пропишем два маршрута IPv4 по умолчанию, основным будет до R26, резервным до R25. Резервный маршрут пропишем с большей AD.
+Track 20 отслеживает состояние IP SLA 2.
+Пропишем два маршрута IPv4 по умолчанию.
 ```
 ip route 0.0.0.0 0.0.0.0 194.14.123.33 track 10
-ip route 0.0.0.0 0.0.0.0 194.14.123.29 20
+ip route 0.0.0.0 0.0.0.0 194.14.123.29 track 20
 ```
-Добавление в конце основного маршрута track 10 говорит о том, что этот маршрут будет использоваться только тогда, когда состояние track 10 в UP.
-
-# 2. Проверка PBR IPv4.
-Проверим таблицу маршрутизации, когда основной линк в работает:
-
-![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route1.PNG)
-
-Видно, что маршрут по умолчанию настроен через R26.
-Теперь на R26 отключим интерфейс e0/1.
-Появилось сообщение:
+Настроим ACL для двух локальных подсетей.
 ```
-TRACKING-5-STATE: 10 ip sla 1 reachability Up->Down
+ip access-list extended acl_nat1
+ permit ip 201.193.45.0 0.0.0.63 any
+ deny   ip any any
+ip access-list extended acl_nat2
+ permit ip 201.193.45.64 0.0.0.63 any
+ deny   ip any any
 ```
-Проверим таблицу маршрутизации еще раз:
+Нвстроим NAT
+```
+ip nat inside source route-map TO_R25 interface Ethernet0/0 overload
+ip nat inside source route-map TO_R26 interface Ethernet0/1 overload
+```
+Настроим Route-map.
+```
+route-map TO_R25 permit 10
+ match ip address acl_nat2
+ match interface Ethernet0/1
+ set ip next-hop verify-availability 194.14.123.29 1 track 20
+!
+route-map TO_R26 permit 10
+ match ip address acl_nat1
+ match interface Ethernet0/0
+ set ip next-hop verify-availability 194.14.123.33 1 track 10
+```
+VPC в локальной сети находятся в разных VLAN. Данные VPC-30 будут проходить через R26, данные VPC-31 будут проходить через R25. При недоступности одного из линков, все данные будут идти через активный линк.
 
-![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv4%20ip%20route2.PNG)
-
-Видно, что маршрут по умолчанию теперь через R25.
-
-# 3. Конфигурация PBR IPv6 на R28.
+# 2. Конфигурация PBR IPv6 на R28.
 Настроим IP SLA:
 ```
 ip sla 100
@@ -106,27 +126,8 @@ event manager applet ISP1_DOWN
 ```
 В зависимости от состояния track 100, будут выполнятся определенный выше действия в конфигурации маршрутизатора
 
-# 4. Проверка PBR IPv6.
 
-Проверим таблицу маршрутизации, когда основной линк в работает:
-
-![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv6%20ip%20route1.PNG)
-
-Видно, что маршрут по умолчанию настроен через R26.
-Теперь на R26 отключим интерфейс e0/1.
-
-Появились сообщения: 
-```
-TRACKING-5-STATE: 100 ip sla 100 reachability Up->Down
-HA_EM-6-LOG: ISP1_DOWN: ISP1 is DOWN
-```
-Проверим таблицу маршрутизации еще раз:
-
-![](https://github.com/dmitriyklimenkov/LAB-PBR/blob/main/ipv6%20ip%20route2.PNG)
-
-Видно, что маршрут по умолчанию теперь через R25.
-
-# 5. Настройка IPv4, IPv6 маршрутов по умолчанию на R27.
+# 3. Настройка IPv4, IPv6 маршрутов по умолчанию на R27.
 ```
 ip route 0.0.0.0 0.0.0.0 194.14.123.25
 !
