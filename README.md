@@ -53,29 +53,48 @@ ip route 0.0.0.0 0.0.0.0 194.14.123.29 track 20
 ```
 ip access-list extended acl_nat1
  permit ip 201.193.45.0 0.0.0.63 any
- deny   ip any any
 ip access-list extended acl_nat2
  permit ip 201.193.45.64 0.0.0.63 any
- deny   ip any any
 ```
-Нвстроим NAT
-```
-ip nat inside source route-map TO_R25 interface Ethernet0/0 overload
-ip nat inside source route-map TO_R26 interface Ethernet0/1 overload
-```
+
 Настроим Route-map.
 ```
 route-map TO_R25 permit 10
  match ip address acl_nat2
- match interface Ethernet0/1
+ match interface Ethernet0/2.4
  set ip next-hop verify-availability 194.14.123.29 1 track 20
 !
 route-map TO_R26 permit 10
  match ip address acl_nat1
- match interface Ethernet0/0
+ match interface Ethernet0/2.3
  set ip next-hop verify-availability 194.14.123.33 1 track 10
 ```
 VPC в локальной сети находятся в разных VLAN. Данные VPC-30 будут проходить через R26, данные VPC-31 будут проходить через R25. При недоступности одного из линков, все данные будут идти через активный линк.
+
+# Проверка PBR IPv4.
+Для проверки на R25 и R26 пропишем статический маршрут в локальную сеть.
+Запустим пинг с VPC31 пинг до R25, пинг есть:
+```
+VPCS> ping 194.14.123.29
+
+84 bytes from 194.14.123.29 icmp_seq=1 ttl=254 time=1.289 ms
+84 bytes from 194.14.123.29 icmp_seq=2 ttl=254 time=1.535 ms
+84 bytes from 194.14.123.29 icmp_seq=3 ttl=254 time=1.802 ms
+84 bytes from 194.14.123.29 icmp_seq=4 ttl=254 time=1.016 ms
+84 bytes from 194.14.123.29 icmp_seq=5 ttl=254 time=0.911 ms
+
+```
+Запустим пинг с VPC31 пинг до R26, пинга нет:
+```
+VPCS> ping 194.14.123.33
+
+194.14.123.33 icmp_seq=1 timeout
+194.14.123.33 icmp_seq=2 timeout
+194.14.123.33 icmp_seq=3 timeout
+194.14.123.33 icmp_seq=4 timeout
+194.14.123.33 icmp_seq=5 timeout
+```
+
 
 # 2. Конфигурация PBR IPv6 на R28.
 Настроим IP SLA:
