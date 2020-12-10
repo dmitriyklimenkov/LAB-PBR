@@ -69,32 +69,24 @@ route-map TO_R26 permit 10
  match interface Ethernet0/2.3
  set ip next-hop verify-availability 194.14.123.33 1 track 10
 ```
+И пропишем на сабинтерфейсах локальной сети.
+```
+interface Ethernet0/2.3
+ encapsulation dot1Q 3
+ ip address 201.193.45.1 255.255.255.192
+ ip policy route-map TO_R26
+!
+interface Ethernet0/2.4
+ encapsulation dot1Q 4
+ ip address 201.193.45.65 255.255.255.192
+ ip policy route-map TO_R25
+
+```
 VPC в локальной сети находятся в разных VLAN. Данные VPC-30 будут проходить через R26, данные VPC-31 будут проходить через R25. При недоступности одного из линков, все данные будут идти через активный линк.
 
 # Проверка PBR IPv4.
-Для проверки на R25 и R26 пропишем статический маршрут в локальную сеть.
-Запустим пинг с VPC31 пинг до R25, пинг есть:
-```
-VPCS> ping 194.14.123.29
+Для проверки с VPC 31 пингуем 8.8.8.8 и наблюдаем через wireshark за интерфейсами e0/1 и e0/0. Когда активный линк R28-R25, пакеты идут по этому маршруту. Если линк R28-R25 погасить, пакеты пойдут через линк R28-R26, как и требуется по заданию.
 
-84 bytes from 194.14.123.29 icmp_seq=1 ttl=254 time=1.289 ms
-84 bytes from 194.14.123.29 icmp_seq=2 ttl=254 time=1.535 ms
-84 bytes from 194.14.123.29 icmp_seq=3 ttl=254 time=1.802 ms
-84 bytes from 194.14.123.29 icmp_seq=4 ttl=254 time=1.016 ms
-84 bytes from 194.14.123.29 icmp_seq=5 ttl=254 time=0.911 ms
-
-```
-Запустим пинг с VPC31 пинг до R26, пинга нет:
-```
-VPCS> ping 194.14.123.33
-
-194.14.123.33 icmp_seq=1 timeout
-194.14.123.33 icmp_seq=2 timeout
-194.14.123.33 icmp_seq=3 timeout
-194.14.123.33 icmp_seq=4 timeout
-194.14.123.33 icmp_seq=5 timeout
-```
-Если погасить линк R25-R28, то маршрут от VPC31 пойдет через R26 и адрес его интерфейса е0.1 будет пинговаться.
 
 
 # 2. Конфигурация PBR IPv6 на R28.
